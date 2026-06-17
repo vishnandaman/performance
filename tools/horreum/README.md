@@ -78,6 +78,30 @@ export CLEANUP_LABELS=false
 ./tools/horreum/run_horreum_integration.sh -c tools/horreum/horreum_chains_fields.yaml --execute
 ```
 
+### List change-detection variables (curl)
+
+Use the helper script (do not paste bearer tokens on the command line):
+
+```bash
+export REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+export HORREUM_API_KEY="HUSR_..."   # or export HORREUM_TOKEN for legacy auth
+
+./tools/horreum/list_variables.sh 391
+```
+
+One-liner equivalent:
+
+```bash
+export REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+curl -sS -f --cacert "$REQUESTS_CA_BUNDLE" \
+  -H "Accept: application/json" \
+  -H "X-Horreum-API-Key: ${HORREUM_API_KEY}" \
+  "${HORREUM_URL:-https://horreum.corp.redhat.com}/api/alerting/variables?test=391" \
+  | python3 -c "import sys,json; [print(f\"{v['id']}:{v['name']}\") for v in sorted(json.load(sys.stdin), key=lambda x: x['name'])]"
+```
+
+`REQUESTS_CA_BUNDLE` is required on Fedora/RHEL — without it curl often gets an empty non-JSON response and `json.load` fails.
+
 > **Warning:** With `CLEANUP_LABELS=false`, removing a label from a YAML file will **not** delete it from Horreum. Stale labels must be removed manually via the Horreum UI if needed.
 
 ## YAML structure
